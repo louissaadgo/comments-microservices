@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -12,18 +10,14 @@ import (
 //Port 4003
 const address string = ":4003"
 
-//Comment Structure
-type comment struct {
-	ID       string `json:"ID"`
-	Content  string `json:"Content"`
-	Verified bool   `json:"Verified"`
-}
-
-//Routes Incoming Requests
+//Forwards events to all services
 func eventBus(w http.ResponseWriter, r *http.Request) {
-	newComment := comment{}
-	json.NewDecoder(r.Body).Decode(&newComment)
-	fmt.Println(newComment)
+	//Forwards to the query service
+	resp, err := http.Post("http://localhost:4002/comments", "application/json", r.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer resp.Body.Close()
 }
 
 //Handles incoming requests

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -37,6 +38,16 @@ func postComment(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("Error decoding rquest body: ", err)
 	}
 	fmt.Fprintf(w, "Comment Received! \n %v", newComment)
+	//Sends an event to the Event-Bus
+	bs, err := json.Marshal(newComment)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	resp, err := http.Post("http://localhost:4003/bus", "application/json", bytes.NewBuffer(bs))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer resp.Body.Close()
 }
 
 //Handles incoming requests

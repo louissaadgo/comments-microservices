@@ -3,17 +3,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
-//Port 4000
-const address string = ":4000"
+const address string = ":4001"
 
 //Comment Structure
 type comment struct {
@@ -24,28 +21,13 @@ type comment struct {
 
 var newComment = comment{}
 
-//Generates a new ID
-func getID() string {
-	return uuid.New().String()
+func moderation(w http.ResponseWriter, r *http.Request) {
+	json.NewDecoder(r.Body).Decode(&newComment)
+	newComment.Verified = true
+	go check()
 }
 
-//Creates new comments
-func postComment(w http.ResponseWriter, r *http.Request) {
-	newComment = comment{
-		ID:       getID(),
-		Verified: false,
-	}
-	//Decodes the request body into newComment
-	err := json.NewDecoder(r.Body).Decode(&newComment)
-	if err != nil {
-		log.Fatalln("Error decoding rquest body: ", err)
-	}
-	fmt.Fprintf(w, "Comment Received! \n %v", newComment)
-	go sendEvent()
-}
-
-func sendEvent() {
-	//Sends an event to the Event-Bus
+func check() {
 	bs, err := json.Marshal(newComment)
 	if err != nil {
 		log.Fatalln(err)
@@ -58,10 +40,9 @@ func sendEvent() {
 	ioutil.ReadAll(resp.Body)
 }
 
-//Handles incoming requests
 func handleRequests() {
 	r := mux.NewRouter()
-	r.HandleFunc("/comment", postComment).Methods("POST")
+	r.HandleFunc("/moderation", moderation).Methods("POST")
 	log.Fatal(http.ListenAndServe(address, r))
 }
 

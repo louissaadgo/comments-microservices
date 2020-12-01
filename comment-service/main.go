@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -22,8 +21,6 @@ type comment struct {
 	Verified bool   `json:"Verified"`
 }
 
-var newComment = comment{}
-
 //Generates a new ID
 func getID() string {
 	return uuid.New().String()
@@ -31,7 +28,7 @@ func getID() string {
 
 //Creates new comments
 func postComment(w http.ResponseWriter, r *http.Request) {
-	newComment = comment{
+	newComment := comment{
 		ID:       getID(),
 		Verified: false,
 	}
@@ -40,12 +37,12 @@ func postComment(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalln("Error decoding rquest body: ", err)
 	}
-	fmt.Fprintf(w, "Comment Received! \n %v", newComment)
-	go sendEvent()
+	fmt.Fprintln(w, newComment)
+	go sendEvent(newComment)
 }
 
-func sendEvent() {
-	//Sends an event to the Event-Bus
+//Sends an event to the Event-Bus
+func sendEvent(newComment comment) {
 	bs, err := json.Marshal(newComment)
 	if err != nil {
 		log.Fatalln(err)
@@ -55,7 +52,6 @@ func sendEvent() {
 		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
-	ioutil.ReadAll(resp.Body)
 }
 
 //Handles incoming requests

@@ -18,8 +18,6 @@ type comment struct {
 	Verified bool   `json:"Verified"`
 }
 
-var newComment = comment{}
-
 //Stores all comments
 var comments = []comment{}
 
@@ -30,9 +28,11 @@ func getComments(w http.ResponseWriter, r *http.Request) {
 
 //Receivec events from the event bus
 func postComments(w http.ResponseWriter, r *http.Request) {
+	newComment := comment{}
 	json.NewDecoder(r.Body).Decode(&newComment)
 	if newComment.Verified == true {
 		comments = append(comments, newComment)
+		return
 	}
 }
 

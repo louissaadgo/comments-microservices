@@ -3,13 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
+//Port 4001
 const address string = ":4001"
 
 //Comment Structure
@@ -19,15 +19,20 @@ type comment struct {
 	Verified bool   `json:"Verified"`
 }
 
-var newComment = comment{}
-
+//Checks if the comment is valid
 func moderation(w http.ResponseWriter, r *http.Request) {
+	newComment := comment{}
 	json.NewDecoder(r.Body).Decode(&newComment)
-	newComment.Verified = true
-	go check()
+	if newComment.Verified == false {
+		newComment.Verified = true
+		go sendEvent(newComment)
+		return
+	}
+	return
 }
 
-func check() {
+//Sends an event to the event bus
+func sendEvent(newComment comment) {
 	bs, err := json.Marshal(newComment)
 	if err != nil {
 		log.Fatalln(err)
@@ -37,9 +42,9 @@ func check() {
 		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
-	ioutil.ReadAll(resp.Body)
 }
 
+//Handles incoming requests
 func handleRequests() {
 	r := mux.NewRouter()
 	r.HandleFunc("/moderation", moderation).Methods("POST")

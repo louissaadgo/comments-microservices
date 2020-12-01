@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -13,41 +11,28 @@ import (
 //Port 4003
 const address string = ":4003"
 
-//Comment Structure
-type comment struct {
-	ID       string `json:"ID"`
-	Content  string `json:"Content"`
-	Verified bool   `json:"Verified"`
-}
-
 //Forwards events to all services
 func eventBus(w http.ResponseWriter, r *http.Request) {
-	newComment := comment{}
-	json.NewDecoder(r.Body).Decode(&newComment)
-	bs, _ := json.Marshal(newComment)
-	if newComment.Verified == false {
-		go mod(bs)
-	} else {
-		go query(bs)
-	}
+	go moderation(r.Body)
+	go query(r.Body)
 }
-func mod(bs []byte) {
-	//Forwards to the moderation service
-	res, err := http.Post("http://localhost:4001/moderation", "application/json", bytes.NewBuffer(bs))
+
+//Forwards event to the moderation service
+func moderation(body io.ReadCloser) {
+	res, err := http.Post("http://localhost:4001/moderation", "application/json", body)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer res.Body.Close()
-	ioutil.ReadAll(res.Body)
 }
-func query(bs []byte) {
-	//Forwards to the query service
-	resp, err := http.Post("http://localhost:4002/comments", "application/json", bytes.NewBuffer(bs))
+
+//Forwards event to the query service
+func query(body io.ReadCloser) {
+	resp, err := http.Post("http://localhost:4002/comments", "application/json", body)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
-	ioutil.ReadAll(resp.Body)
 }
 
 //Handles incoming requests

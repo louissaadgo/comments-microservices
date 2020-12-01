@@ -19,6 +19,7 @@ type comment struct {
 	ID       string `json:"ID"`
 	Content  string `json:"Content"`
 	Verified bool   `json:"Verified"`
+	Valid    bool   `json:"Valid"`
 }
 
 //Generates a new ID
@@ -31,6 +32,7 @@ func postComment(w http.ResponseWriter, r *http.Request) {
 	newComment := comment{
 		ID:       getID(),
 		Verified: false,
+		Valid:    false,
 	}
 	//Decodes the request body into newComment
 	err := json.NewDecoder(r.Body).Decode(&newComment)

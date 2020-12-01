@@ -16,6 +16,7 @@ type comment struct {
 	ID       string `json:"ID"`
 	Content  string `json:"Content"`
 	Verified bool   `json:"Verified"`
+	Valid    bool   `json:"Valid"`
 }
 
 //Stores all comments
@@ -30,7 +31,7 @@ func getComments(w http.ResponseWriter, r *http.Request) {
 func postComments(w http.ResponseWriter, r *http.Request) {
 	newComment := comment{}
 	json.NewDecoder(r.Body).Decode(&newComment)
-	if newComment.Verified == true {
+	if newComment.Valid == true {
 		comments = append(comments, newComment)
 		return
 	}

@@ -17,6 +17,7 @@ type comment struct {
 	ID       string `json:"ID"`
 	Content  string `json:"Content"`
 	Verified bool   `json:"Verified"`
+	Valid    bool   `json:"Valid"`
 }
 
 //Checks if the comment is valid

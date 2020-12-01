@@ -1,7 +1,8 @@
 package main
 
 import (
-	"io"
+	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -11,15 +12,31 @@ import (
 //Port 4003
 const address string = ":4003"
 
+//Comment Structure
+type comment struct {
+	ID       string `json:"ID"`
+	Content  string `json:"Content"`
+	Verified bool   `json:"Verified"`
+}
+
 //Forwards events to all services
 func eventBus(w http.ResponseWriter, r *http.Request) {
-	go moderation(r.Body)
-	go query(r.Body)
+	newComment := comment{}
+	err := json.NewDecoder(r.Body).Decode(&newComment)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	bs, err := json.Marshal(newComment)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	go moderation(bs)
+	go query(bs)
 }
 
 //Forwards event to the moderation service
-func moderation(body io.ReadCloser) {
-	res, err := http.Post("http://localhost:4001/moderation", "application/json", body)
+func moderation(bs []byte) {
+	res, err := http.Post("http://localhost:4001/moderation", "application/json", bytes.NewBuffer(bs))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -27,8 +44,8 @@ func moderation(body io.ReadCloser) {
 }
 
 //Forwards event to the query service
-func query(body io.ReadCloser) {
-	resp, err := http.Post("http://localhost:4002/comments", "application/json", body)
+func query(bs []byte) {
+	resp, err := http.Post("http://localhost:4002/comments", "application/json", bytes.NewBuffer(bs))
 	if err != nil {
 		log.Fatalln(err)
 	}

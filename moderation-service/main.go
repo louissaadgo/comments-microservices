@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -26,6 +27,9 @@ func moderation(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&newComment)
 	if newComment.Verified == false {
 		newComment.Verified = true
+		if strings.Contains(newComment.Content, "ugly") == false {
+			newComment.Valid = true
+		}
 		go sendEvent(newComment)
 		return
 	}
